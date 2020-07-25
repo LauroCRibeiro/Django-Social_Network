@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-3">
+    <div class="col-md-2">
+        <a href="#">
+            <img src="/media/{{member.profile_img}}" alt="{{member.full_name}}" class="img-thumbnail">           
+        </a>
+        <h6 class="mt-2">{{member.full_name}}</h6>
+    </div>
+    <div class="col-md-7">
+        <h4 class="mb-3 pb-1 border-bottom">Notifications</h4>
+        <div class="list-group">
+            {% for noti in notifications %}
+            <li href="#" class="text-secondary list-group-item">{{noti.noti_content}}</li>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        {% include 'left.html' %}
+    </div>
+</div>
+{% endblock %}

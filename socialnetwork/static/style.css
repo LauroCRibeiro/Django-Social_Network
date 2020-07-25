@@ -1,0 +1,16 @@
+.change-image{
+    position: absolute;
+    right: 20px;
+    top: 5px;
+}
+.left-image{
+    display: block;
+}
+
+.search-result{
+    position: absolute;
+    top: 48px;
+    z-index: 999999;
+    width: 30%;
+    display: none;
+}

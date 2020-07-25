@@ -1,0 +1,208 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-3">
+    <div class="col-md-2 mb-3 left-image">
+        <a href="/profile">
+            <img src="/media/{{member.profile_img}}" alt="{{member.full_name}}" class="img-thumbnail">
+        </a>
+        <h6 class="mt-2">{{member.full_name}}</h6>
+    </div>
+    <div class="col-md-7">
+        <!-- New Post -->
+        <div class="card mb-4 shadow">
+            <h5 class="card-header">Share Your Thought</h5>
+            <div class="card-body">
+                {% for msg in messages %}
+                <p class="text-success form-success-msg">{{msg}}</p>
+                {% endfor %}
+                <!-- Create Post Start -->
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Text</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Text with photos</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                        <form method="post" action="/create-post">
+                            {% csrf_token %}
+                            <textarea class="form-control write-post mt-2" name="post_content" placeholder="Write here"></textarea>
+                            <input type="submit" value="Post" class="btn btn-info btn-sm mt-2" />
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                        <form method="post" action="/create-post-with-image" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <table class="table table-bordered mt-2">
+                                <tr>
+                                    <td><textarea class="form-control write-post" name="post_content" placeholder="Write here"></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="file" name="post_image" /></td>
+                                </tr>
+                            </table>
+                            <input type="submit" value="Post" class="btn btn-info btn-sm mt-2" />
+                        </form>
+                    </div>
+                </div>
+                <!-- Create Post ## End -->
+            </div>
+        </div>
+        <!-- Previous Posts -->
+        {% for post in posts %}
+        {% if request.session.memberData %}
+        <div class="card mb-4">
+            <h5 class="card-header">
+                <a href="/member/{{post.member_id.username}}/{{post.member_id.id}}">{{post.member_id.full_name}}</a><small class="float-right text-muted">{{post.post_date}}</small>
+            </h5>
+            <div class="card-body">
+                {% if post.post_image != "no" %}
+                <p><img src="/media/post_imgs/{{post.post_image}}" class="rounded img-fluid" /></p>
+                {% endif %}    
+                <p class="card-text">{{post.post_content}}</p>
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-sm-6 text-center">
+                        <button class="btn btn-secondary btn-sm likeBtn" data-receiverid="{{post.member_id.id}}" data-member="{{member.id}}" data-post="{{post.id}}"><i class="fa fa-thumbs-up"></i></button>
+                        <button class="btn btn-sm btn-primary"><span class="likeCount{{post.id}}">{{post.like_post.count}}</span> <span class="likeText{{post.id}}">Likes</span></button>
+                    </div>
+                    <div class="col-sm-6 text-center">
+                        <button class="btn btn-sm btn-dark" data-target="#commentsModal{{post.id}}" data-toggle="modal"><i class="fa fa-comment"></i> {{post.comment_post.count}} Comments</button>
+                        <!-- Comments Modal -->
+                        <div class="modal fade" tabindex="-1" role="dialog" id="commentsModal{{post.id}}">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Comments</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div style="height: 300px; overflow: auto;">
+                                            <ul class="list-group comments-wrapper{{post.id}}">
+                                                {% for comment in post.comments %}
+                                                <li class="list-group-item">
+                                                    <blockquote class="blockquote text-left">
+                                                        <p class="mb-0">{{comment.comment_body}}</p>
+                                                        <footer class="blockquote-footer"><cite title="Source Title">{{comment.member_id.full_name}}</cite></footer>
+                                                      </blockquote>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        <form method="post" action="post-comment/{{post.id}}" class="mt-3">
+                                            <textarea rows="5" data-postid="{{post.id}}" placeholder="Enter Comment" class="form-control comment-body{{post.id}}"></textarea>
+                                            <button type="button" data-receiverid="{{post.member_id.id}}" data-index="{{post.id}}" class="btn btn-primary btn-sm mt-2 comment-btn">Post Comment</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Comments Modal -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        <!-- ## Previous Post End -->
+    </div>
+    <div class="col-md-3 mb-3">
+        {% include 'left.html' %}
+    </div>
+</div>
+<script src="{% static 'jquery.validate.min.js' %}"></script>
+<script>
+    $(document).ready(function(){
+        $("#formValid").validate({
+            errorClass:'is-invalid',
+            validClass:'is-valid',
+            rules:{
+                post_content:'required'
+            }
+        });
+        $(".form-success-msg").fadeOut('slow');
+        // Post Comment Via Ajax
+        $(".comment-btn").on('click',function(){
+            var vm=$(this);
+            var index=vm.attr('data-index');
+            var _comment=$(".comment-body"+index).val();
+            var _postid=index;
+            var _member_id="{{member.id}}";
+            var _rec_id=$(this).attr('data-receiverid');
+            $.ajax({
+                url:'/post-comment',
+                type:'post',
+                dataType:'json',
+                data:{
+                    member_id:_member_id,
+                    receiver_id:_rec_id,
+                    post_id:_postid,
+                    comment:_comment,
+                    csrfmiddlewaretoken:'{{csrf_token}}'
+                },
+                beforeSend:function(){
+                    $(vm).text('Posting...').addClass('disabled');
+                },
+                success:function(res){
+                    if(res.bool==true){
+                        $(".comment-body"+index).val('');
+                        var comments=$.parseJSON(res.comments);
+                        $(vm).text('Post Comment').removeClass('disabled');
+                        // Fetch Latest Comments
+                        var _commentsHtml='';
+                        console.log(comments);
+                        $.each(comments,function(index,comment){
+                            _commentsHtml+='<li>';
+                            _commentsHtml+='<blockquote class="blockquote text-left">';
+                            _commentsHtml+='<p class="mb-0">'+comment.fields.comment_body+'</p>';
+                            _commentsHtml+='<footer class="blockquote-footer"><cite title="Source Title">{{member.full_name}}</cite></footer>';
+                            _commentsHtml+='</blockquote>';
+                            _commentsHtml+='</li>';
+                        });
+                        $(".comments-wrapper"+index).html(_commentsHtml);
+                    }
+                }
+            });
+        });
+        // End Post
+        // Like Section Start
+        $(".likeBtn").on('click',function(){
+            var _postid=$(this).attr('data-post');
+            var _memberid=$(this).attr('data-member');
+            var _receiverid=$(this).attr('data-receiverid');
+            var vm=$(this);
+            // Run Ajax
+            $.ajax({
+                url:'/post-like',
+                type:'post',
+                dataType:'json',
+                data:{
+                    member_id:_memberid,
+                    receiver_id:_receiverid,
+                    post_id:_postid,
+                    csrfmiddlewaretoken:'{{csrf_token}}'
+                },
+                beforeSend:function(){
+                    $(vm).addClass('disabled');
+                },
+                success:function(res){
+                    // if(res.bool==true){
+                    $(".likeCount"+_postid).text(res.totalLikes);
+                    $(vm).removeClass('disabled');
+                    // }else{
+                    //     console.log('You already liked this??');
+                    //     $(vm).removeClass('disabled');
+                    // }
+                }
+            });
+        });
+        // Like Section End
+    });
+</script>
+{% endblock %}

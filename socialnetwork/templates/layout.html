@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Home Page{% endblock %}</title>
+    <!-- Font Awesome 4 -->
+    <link rel="stylesheet" href="{% static 'fa4/css/font-awesome.min.css' %}" />
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'style.css' %}" />
+    <!-- Main Jquery -->
+    <script src="{% static 'jquery-3.3.1.min.js' %}"></script>
+    <!-- Bootstrap -->
+    <script src="{% static 'bootstrap.min.js' %}"></script>
+    <!-- CommonJs -->
+    <script src="{% static 'common.js' %}"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">The Social Network</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                {% if request.session.loginMember %}
+                <form class="form-inline my-2 my-lg-0 mx-auto">
+                    {% csrf_token %}
+                    <input class="form-control" id="topSearch" type="search" placeholder="Search Friends" aria-label="Search">
+                    <div class="list-group search-result">
+
+                    </div>
+                </form>
+                {% endif %}
+                <div class="navbar-nav ml-auto">
+                    {% if request.session.loginMember %}
+                    <a class="nav-item nav-link" href="/profile">Profile</a>
+                    <a class="nav-item nav-link" href="/logout">Logout</a>
+                    {% else %}
+                    <a class="nav-item nav-link" href="/login">Login</a>
+                    <a class="nav-item nav-link" href="/register">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+<script>
+    $(document).ready(function(){
+        $("#topSearch").on('keyup',function(){
+            var _searchStr=$(this).val();
+            var vm=(this);
+            if(_searchStr.length>=3){
+                // Ajax Search
+                $.ajax({
+                    url:'/search',
+                    method:'post',
+                    dataType:'json',
+                    data:{
+                        search:_searchStr,
+                        csrfmiddlewaretoken:'{{csrf_token}}'
+                    },
+                    success:function(res){
+                        // console.log(jsonRes);
+                        // return false;
+                        var _html='';
+                        $(vm).val(_searchStr);
+                        if(res.bool==true){
+                            var jsonRes=$.parseJSON(res.result);
+                            var totalResult=$.parseJSON(res.totalResult);
+                            $.each(jsonRes,function(index,val){
+                                _html+='<a href="/member/'+val.fields.username+'/'+val.pk+'" class="list-group-item text-decoration-none"><img src="/media/'+val.fields.profile_img+'" width="30" class="rounded" /> '+val.fields.full_name+'</a>';
+                            });
+                            if(totalResult>10){
+                                _html+='<a href="#" class="list-group-item">See All Results</a>';
+                            }
+                            $(".search-result").html(_html);
+                        }else{
+                            _html='<li class="list-group-item">No result found!!</li>';
+                            $(".search-result").html(_html);
+                        }
+                    }
+                });
+                $(".search-result").show();
+            }else{
+                $(".search-result").hide();
+            }
+        });
+    });
+</script>
+</body>
+</html>

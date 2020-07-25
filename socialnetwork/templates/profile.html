@@ -1,0 +1,127 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-3">
+    <div class="col-md-2 mb-3 left-image">
+        <a href="#" class="change-image badge badge-dark" data-toggle="modal" data-target="#changeImage">
+            <i class="fa fa-2x fa-edit"></i>
+        </a>
+        <a href="#">
+            <img src="/media/{{member.profile_img}}" alt="{{member.full_name}}" class="img-thumbnail">
+        </a>
+        <h6 class="mt-2 mb-4">{{member.full_name}}</h6>
+<div class="modal fade" tabindex="-1" role="dialog" id="changeImage">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Image</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="/update-profile-image" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>Choose Image</td>
+                            <td><input type="file" name="profile_img" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <input type="submit" value="Update" class="btn btn-dark btn-sm" />
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+    <div class="col-md-7">
+        <h4 class="mb-3 pb-1 border-bottom">My Profile</h4>
+        <form method="post" action="/update-profile-detail">
+            {% for msg in messages %}
+                <p class="text-success">{{msg}}</p>
+            {% endfor %}
+            {% csrf_token %}
+            <table class="table table-bordered">
+                <tr>
+                    <td>Full Name</td>
+                    <td><input type="text" name="full_name" value="{{member.full_name}}" class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td>Username</td>
+                    <td><span>{{member.username}}</span></td>
+                </tr>
+                <tr>
+                    <td>Email</td>
+                    <td><input type="text" name="email" value="{{member.email}}" class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td>Password</td>
+                    <td><a href="#" data-toggle="modal" data-target="#changePassword" class="btn btn-sm btn-outline-secondary">Change Password</a></td>
+                </tr>
+                <tr>
+                    <td>City</td>
+                    <td><input type="text" name="city" value="{{member.city}}" class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td>State</td>
+                    <td><input type="text" name="state" value="{{member.state}}" class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td>Qualification</td>
+                    <td><input type="text" name="quali" value="{{member.qualification}}" class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td>Work</td>
+                    <td><input type="text" name="work" value="{{member.work}}" class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="submit" value="Update" class="btn btn-dark btn-sm" />
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div class="col-md-3 mb-3">
+        {% include 'left.html' %}
+    </div>
+</div>
+<!-- Change Password Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="changePassword">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="/update-password">
+                    {% csrf_token %}
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>New Password</td>
+                            <td><input type="text" name="new_password" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <input type="submit" value="Update" class="btn btn-dark btn-sm" />
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Change Modal -->
+<script>
+    $(".text-success").fadeOut('slow');
+</script>
+{% endblock %}

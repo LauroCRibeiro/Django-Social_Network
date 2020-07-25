@@ -1,0 +1,227 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-3">
+    <div class="col-md-2 mb-3 left-image">
+        <a href="#">
+            <img src="/media/{{member.profile_img}}" alt="{{member.full_name}}" class="img-thumbnail">           
+        </a>
+        <h6 class="mt-2">{{member.full_name}}</h6>
+        {% if friend_status %}
+        <p><button class="btn btn-warning btn-sm" id="removeFriendBtn" data-senderid="{{member_id}}" data-member="{{member.id}}">Remove Friend</button></p>
+        <p><a href="/member/{{member.username}}/{{member.id}}">Posts</a></p>
+        <p><a href="/friend/friends/{{member.id}}">Friends</a></p>
+        {% else %}
+        <p><button class="btn btn-info btn-sm" id="addFriendBtn" data-senderid="{{member_id}}" data-member="{{member.id}}">Add Friend</button></p>
+        {% endif %}
+        
+    </div>
+    <div class="col-md-7">
+        <h4 class="mb-3">{{member.full_name}} Posts</h4>
+        {% if posts %}
+        <!-- Previous Posts -->
+        {% for post in posts %}
+        {% if request.session.memberData %}
+        <div class="card mb-4">
+            <h5 class="card-header">
+                <a href="/member/{{post.member_id.username}}/{{post.member_id.id}}">{{post.member_id.full_name}}</a><small class="float-right text-muted">{{post.post_date}}</small>
+            </h5>
+            <div class="card-body">
+                {% if post.post_image != "no" %}
+                <p><img src="/media/post_imgs/{{post.post_image}}" class="rounded img-fluid" /></p>
+                {% endif %}    
+                <p class="card-text">{{post.post_content}}</p>
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-sm-6 text-center">
+                        <button class="btn btn-secondary btn-sm likeBtn" data-member="{{member_id}}" data-post="{{post.id}}"><i class="fa fa-thumbs-up"></i></button>
+                        <button class="btn btn-sm btn-primary"><span class="likeCount{{post.id}}">{{post.like_post.count}}</span> <span class="likeText{{post.id}}">Likes</span></button>
+                    </div>
+                    <div class="col-sm-6 text-center">
+                        <button class="btn btn-sm btn-dark" data-target="#commentsModal{{post.id}}" data-toggle="modal"><i class="fa fa-comment"></i> {{post.comment_post.count}} Comments</button>
+                        <!-- Comments Modal -->
+                        <div class="modal fade" tabindex="-1" role="dialog" id="commentsModal{{post.id}}">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Comments</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div style="height: 300px; overflow: auto;">
+                                            <ul class="list-group comments-wrapper{{post.id}}">
+                                                {% for comment in post.comments %}
+                                                <li class="list-group-item">
+                                                    <blockquote class="blockquote text-left">
+                                                        <p class="mb-0">{{comment.comment_body}}</p>
+                                                        <footer class="blockquote-footer"><cite title="Source Title">{{comment.member_id.full_name}}</cite></footer>
+                                                      </blockquote>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        <form method="post" action="post-comment/{{post.id}}" class="mt-3">
+                                            <textarea rows="5" data-postid="{{post.id}}" placeholder="Enter Comment" class="form-control comment-body{{post.id}}"></textarea>
+                                            <button type="button" data-index="{{post.id}}" class="btn btn-primary btn-sm mt-2 comment-btn">Post Comment</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Comments Modal -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% else %}
+        <p class="text-danger">No posts found!!</p>
+        {% endif %}
+        <!-- ## Previous Post End -->
+    </div>
+    <div class="col-md-3 mb-3">
+        {% include 'left.html' %}
+    </div>
+</div>
+<script src="{% static 'jquery.validate.min.js' %}"></script>
+<script>
+    $(document).ready(function(){
+        $("#formValid").validate({
+            errorClass:'is-invalid',
+            validClass:'is-valid',
+            rules:{
+                post_content:'required'
+            }
+        });
+        $(".form-success-msg").fadeOut('slow');
+        // Post Comment Via Ajax
+        $(".comment-btn").on('click',function(){
+            var vm=$(this);
+            var index=vm.attr('data-index');
+            var _comment=$(".comment-body"+index).val();
+            var _postid=index;
+            var _member_id="{{member_id}}";
+            $.ajax({
+                url:'/post-comment',
+                type:'post',
+                dataType:'json',
+                data:{
+                    member_id:_member_id,
+                    post_id:_postid,
+                    comment:_comment,
+                    csrfmiddlewaretoken:'{{csrf_token}}'
+                },
+                beforeSend:function(){
+                    $(vm).text('Posting...').addClass('disabled');
+                },
+                success:function(res){
+                    if(res.bool==true){
+                        $(".comment-body"+index).val('');
+                        var comments=$.parseJSON(res.comments);
+                        $(vm).text('Post Comment').removeClass('disabled');
+                        // Fetch Latest Comments
+                        var _commentsHtml='';
+                        console.log(comments);
+                        $.each(comments,function(index,comment){
+                            _commentsHtml+='<li>';
+                            _commentsHtml+='<blockquote class="blockquote text-left">';
+                            _commentsHtml+='<p class="mb-0">'+comment.fields.comment_body+'</p>';
+                            _commentsHtml+='<footer class="blockquote-footer"><cite title="Source Title">'+comment.fields.member_id.full_name+'</cite></footer>';
+                            _commentsHtml+='</blockquote>';
+                            _commentsHtml+='</li>';
+                        });
+                        $(".comments-wrapper"+index).html(_commentsHtml);
+                    }
+                }
+            });
+        });
+        // End Post
+        // Like Section Start
+        $(".likeBtn").on('click',function(){
+            var _postid=$(this).attr('data-post');
+            var _memberid=$(this).attr('data-member');
+            var vm=$(this);
+            // Run Ajax
+            $.ajax({
+                url:'/post-like',
+                type:'post',
+                dataType:'json',
+                data:{
+                    member_id:_memberid,
+                    post_id:_postid,
+                    csrfmiddlewaretoken:'{{csrf_token}}'
+                },
+                beforeSend:function(){
+                    $(vm).addClass('disabled');
+                },
+                success:function(res){
+                    // if(res.bool==true){
+                    $(".likeCount"+_postid).text(res.totalLikes);
+                    $(vm).removeClass('disabled');
+                    // }else{
+                    //     console.log('You already liked this??');
+                    //     $(vm).removeClass('disabled');
+                    // }
+                }
+            });
+        });
+        // Like Section End
+
+        // Send Friend Request Start
+        $("#addFriendBtn").on('click',function(){
+            var friend_id=$(this).attr('data-member');
+            var member_id=$(this).attr('data-senderid');
+            var vm=$(this);
+            $.ajax({
+                url:'/add-friend',
+                type:'post',
+                data:{
+                    friend_id:friend_id,
+                    member_id:member_id,
+                    csrfmiddlewaretoken:'{{csrf_token}}'
+                },
+                dataType:'json',
+                beforeSend:function(){
+                    $(vm).text('Sending..');
+                },
+                success:function(res){
+                    if(res.bool==true){
+                        location.reload();
+                    }
+                }
+            });
+        });
+        // End Friend Request
+
+        // Cancel Friend Request
+        $("#removeFriendBtn").on('click',function(){
+            var friend_id=$(this).attr('data-member');
+            var member_id=$(this).attr('data-senderid');
+            var vm=$(this);
+            $.ajax({
+                url:'/delete-friend',
+                type:'post',
+                data:{
+                    friend_id:friend_id,
+                    member_id:member_id,
+                    csrfmiddlewaretoken:'{{csrf_token}}'
+                },
+                dataType:'json',
+                beforeSend:function(){
+                    $(vm).text('Sending..');
+                },
+                success:function(res){
+                    if(res.bool==true){
+                        location.reload();
+                    }
+                }
+            });
+        });
+        // End Cancel Friend Request
+    });
+</script>
+{% endblock %}

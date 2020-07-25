@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-5">
+    <div class="col-md-7">
+        <img src="/media/{{settings.login_banner}}" class="img-fluid rounded shadow" />
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow">
+            <h5 class="card-header">Login</h5>
+            <div class="card-body">
+                {% for msg in messages %}
+                <p class="text-danger">{{msg}}</p>
+                {% endfor %}
+                <form method="post" action="/member-login" id="formValid">
+                    {% csrf_token %}
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Username</th>
+                            <td><input type="text" name="username" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <th>Password</th>
+                            <td><input type="password" name="password" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <input type="submit" value="Login" class="btn btn-danger" />
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{% static 'jquery.validate.min.js' %}"></script>
+<script>
+    $(document).ready(function(){
+        $("#formValid").validate({
+            errorClass:'is-invalid',
+            validClass:'is-valid',
+            rules:{
+                username:'required',
+                password:'required'
+            }
+        });
+    });
+</script>
+{% endblock %}

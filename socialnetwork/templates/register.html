@@ -1,0 +1,60 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-5">
+    <div class="col-md-7">
+        <img src="/media/{{settings.register_banner}}" class="img-fluid rounded shadow" />
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow">
+            <h5 class="card-header">Register</h5>
+            <div class="card-body">
+                {% for msg in messages %}
+                <p class="text-success">{{msg}}</p>
+                {% endfor %}
+                <form method="post" action="/create-member" id="formValid">
+                    {% csrf_token %}
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Full Name<span class="text-danger">*</span></th>
+                            <td><input type="text" name="fname" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <th>Username<span class="text-danger">*</span></th>
+                            <td><input type="text" name="username" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <th>Email<span class="text-danger">*</span></th>
+                            <td><input type="email" name="email" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <th>Password<span class="text-danger">*</span></th>
+                            <td><input type="password" name="password" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <input type="submit" value="Submit" class="btn btn-danger" />
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{% static 'jquery.validate.min.js' %}"></script>
+<script>
+    $(document).ready(function(){
+        $("#formValid").validate({
+            errorClass:'is-invalid',
+            validClass:'is-valid',
+            rules:{
+                fname:'required',
+                username:'required',
+                email:'required',
+                password:'required'
+            }
+        });
+    });
+</script>
+{% endblock %}
